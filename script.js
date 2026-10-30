@@ -348,8 +348,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Render Karat Dropdown options in Calculator
         if (karatSelect) {
-            const currentSelected = karatSelect.value || '24K';
-            karatSelect.innerHTML = '';
+            const currentSelected = karatSelect.value || '';
+            karatSelect.innerHTML = '<option value="" selected disabled>-- Pilih Kadar Emas --</option>';
             karatList.forEach(item => {
                 const price = calcPricePerGram(basePrice24K, item.percent);
                 const option = document.createElement('option');
@@ -451,7 +451,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'Perhiasan': ['Kalung', 'Cincin', 'Gelang', 'Anting', 'Liontin', 'Lainnya']
     };
 
-    let currentWeight = parseFloat(weightInput?.value) || 10;
+    let currentWeight = parseFloat(weightInput?.value) || 0;
 
     function getOutletsList() {
         const savedOutlets = localStorage.getItem('jantung_emas_outlets');
@@ -461,8 +461,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function populateCalcOutlets() {
         if (!calcOutletSelect) return;
         const outlets = getOutletsList();
-        const currentVal = calcOutletSelect.value;
-        calcOutletSelect.innerHTML = '';
+        const currentVal = calcOutletSelect.value || '';
+        calcOutletSelect.innerHTML = '<option value="" selected disabled>-- Pilih Cabang / Outlet Terdekat --</option>';
         
         outlets.forEach(outlet => {
             const option = document.createElement('option');
@@ -475,12 +475,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function populateBentukOptions() {
         if (!jenisEmasSelect || !bentukEmasSelect) return;
-        const selectedJenis = jenisEmasSelect.value || 'Logam Mulia';
-        const shapes = BENTUK_MAP[selectedJenis] || BENTUK_MAP['Logam Mulia'];
-        
+        const selectedJenis = jenisEmasSelect.value;
         const previousSelection = bentukEmasSelect.value;
-        bentukEmasSelect.innerHTML = '';
 
+        bentukEmasSelect.innerHTML = '<option value="" selected disabled>-- Pilih Bentuk Emas --</option>';
+
+        if (!selectedJenis || !BENTUK_MAP[selectedJenis]) {
+            return;
+        }
+
+        const shapes = BENTUK_MAP[selectedJenis];
         shapes.forEach(shape => {
             const opt = document.createElement('option');
             opt.value = shape;
@@ -527,20 +531,38 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function runCalculator() {
-        const selectedJenis = jenisEmasSelect?.value || 'Logam Mulia';
-        const selectedBentuk = bentukEmasSelect?.value || 'Antam';
-        const selectedKaratName = karatSelect?.value || '24K';
-        
+        const selectedJenis = jenisEmasSelect?.value || '';
+        const selectedBentuk = bentukEmasSelect?.value || '';
+        const selectedKaratName = karatSelect?.value || '';
+        const weightVal = parseFloat(weightInput?.value);
+        const selectedOutletId = calcOutletSelect?.value || '';
+
+        const outlets = getOutletsList();
+        const targetOutlet = outlets.find(o => String(o.id) === String(selectedOutletId));
+
+        // Check if all 5 steps are properly selected/filled
+        const isComplete = selectedJenis && selectedBentuk && selectedKaratName && !isNaN(weightVal) && weightVal > 0 && selectedOutletId && targetOutlet;
+
+        if (!isComplete) {
+            if (totalResultPrice) {
+                totalResultPrice.textContent = 'Rp 0';
+            }
+            if (calcDetailText) {
+                calcDetailText.textContent = 'Silakan pilih jenis, bentuk, kadar, berat, dan cabang untuk melihat estimasi.';
+            }
+            if (calcWaBtn) {
+                calcWaBtn.onclick = () => {
+                    alert('Silakan lengkapi semua data kalkulator (Jenis, Bentuk, Kadar, Berat, dan Cabang) terlebih dahulu!');
+                };
+            }
+            return;
+        }
+
         const karatList = getKaratData();
         const item = karatList.find(k => k.name === selectedKaratName) || karatList[1];
         
         let ratePerGram = calcPricePerGram(basePrice24K, item.percent);
-        let totalPrice = Math.round(ratePerGram * currentWeight);
-
-        // Fetch selected outlet WhatsApp details
-        const outlets = getOutletsList();
-        const selectedOutletId = calcOutletSelect?.value;
-        const targetOutlet = outlets.find(o => String(o.id) === String(selectedOutletId)) || outlets[0] || { name: 'Outlet Utama', whatsapp: '6281234567890' };
+        let totalPrice = Math.round(ratePerGram * weightVal);
 
         let cleanWa = (targetOutlet.whatsapp || '6281234567890').replace(/[^0-9]/g, '');
         if (cleanWa.startsWith('0')) {
@@ -552,11 +574,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (calcDetailText) {
-            calcDetailText.textContent = `Estimasi ${currentWeight} gram ${item.name} (${selectedJenis} - ${selectedBentuk}) @ ${formatIDR(ratePerGram)} / gram — Cabang: ${targetOutlet.name}`;
+            calcDetailText.textContent = `Estimasi ${weightVal} gram ${item.name} (${selectedJenis} - ${selectedBentuk}) @ ${formatIDR(ratePerGram)} / gram — Cabang: ${targetOutlet.name}`;
         }
 
         if (calcWaBtn) {
-            const msg = `Halo Jantung Emas Indonesia (${targetOutlet.name}), saya mau jual emas:\n\n- Jenis Emas: ${selectedJenis}\n- Bentuk: ${selectedBentuk}\n- Kadar: ${item.name}\n- Berat: ${currentWeight} Gram\n- Estimasi Total: ${formatIDR(totalPrice)}\n\nMohon info jadwal & tempat transaksi untuk cabang ${targetOutlet.name}. Terima kasih!`;
+            const msg = `Halo Jantung Emas Indonesia (${targetOutlet.name}), saya mau jual emas:\n\n- Jenis Emas: ${selectedJenis}\n- Bentuk: ${selectedBentuk}\n- Kadar: ${item.name}\n- Berat: ${weightVal} Gram\n- Estimasi Total: ${formatIDR(totalPrice)}\n\nMohon info jadwal & tempat transaksi untuk cabang ${targetOutlet.name}. Terima kasih!`;
             const encoded = encodeURIComponent(msg);
             calcWaBtn.onclick = () => {
                 window.open(`https://wa.me/${cleanWa}?text=${encoded}`, '_blank');
