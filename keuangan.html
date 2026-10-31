@@ -97,21 +97,19 @@
             <p class="text-xs text-slate-500">Sistem Akuntansi Terintegrasi: Jurnal, Buku Besar, Penjualan, Biaya, Utang Usaha, Arus Kas, Neraca &amp; Tutup Buku.</p>
         </div>
 
-        <form onsubmit="return false;" class="space-y-4">
+        <form id="finLoginForm" onsubmit="return false;" class="space-y-4" autocomplete="off">
             <div>
-                <label class="block text-xs font-bold text-slate-600 mb-1.5">Pilih Role Akses Keuangan</label>
-                <select id="finLoginRoleSelect" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 text-slate-800 text-sm font-extrabold focus:outline-none focus:border-emerald-600 focus:bg-white transition">
-                    <option value="HEAD_FINANCE">Keuangan Pusat (Semua Cabang - Konsolidasi)</option>
-                    <option value="FIN_BRANCH_1">Keuangan Cabang: Jakarta</option>
-                    <option value="FIN_BRANCH_2">Keuangan Cabang: Gading Serpong</option>
-                    <option value="FIN_BRANCH_3">Keuangan Cabang: Bekasi</option>
+                <label class="block text-xs font-bold text-slate-600 mb-1.5">User ID / Username Keuangan</label>
+                <input type="text" id="finLoginUsernameInput" placeholder="Masukkan User ID / Username..." autocomplete="off" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 text-slate-800 text-sm font-semibold focus:outline-none focus:border-emerald-600 focus:bg-white transition">
+                <select id="finLoginRoleSelect" class="hidden">
+                    <option value="HEAD_FINANCE">Keuangan Pusat</option>
                 </select>
             </div>
             <div>
-                <label class="block text-xs font-bold text-slate-600 mb-1.5">PIN Otorisasi Keuangan</label>
-                <input type="password" id="finLoginPinInput" value="190212Aja" placeholder="Masukkan PIN Keuangan..." class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 text-center text-slate-800 text-base font-bold focus:outline-none focus:border-emerald-600 focus:bg-white transition">
+                <label class="block text-xs font-bold text-slate-600 mb-1.5">PIN / Password</label>
+                <input type="password" id="finLoginPinInput" value="" placeholder="Masukkan PIN / Password..." autocomplete="new-password" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 text-slate-800 text-sm font-semibold focus:outline-none focus:border-emerald-600 focus:bg-white transition">
             </div>
-            <p id="finLoginErrorMsg" class="text-xs text-rose-500 text-center hidden font-semibold">PIN tidak valid! Gunakan PIN default: 190212Aja</p>
+            <p id="finLoginErrorMsg" class="text-xs text-rose-500 text-center hidden font-semibold">User ID atau PIN/Password tidak sesuai! Silakan hubungi Admin.</p>
             <button type="submit" id="finSubmitLoginBtn" class="w-full py-3.5 px-6 rounded-xl sidebar-link-active font-extrabold text-sm flex items-center justify-center gap-2">
                 <i class="fa-solid fa-unlock-keyhole"></i>
                 <span>Masuk ke Sistem Keuangan</span>
@@ -157,6 +155,11 @@
                     <button type="button" data-fintab="bukubesar" class="fin-nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs transition sidebar-link-inactive">
                         <i class="fa-solid fa-layer-group w-5 text-center text-sm"></i>
                         <span>Buku Besar (Ledger)</span>
+                    </button>
+
+                    <button type="button" data-fintab="inventaris" class="fin-nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs transition sidebar-link-inactive">
+                        <i class="fa-solid fa-boxes-stacked w-5 text-center text-sm"></i>
+                        <span>Inventory / Inventaris</span>
                     </button>
 
                     <button type="button" data-fintab="penjualan" class="fin-nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs transition sidebar-link-inactive">
@@ -481,10 +484,39 @@
                         </div>
                     </div>
 
+                    <!-- Pengaturan Cepat Setoran Modal Awal Kas Sesuai Keinginan -->
+                    <div class="clean-card p-5 border-l-4 border-l-blue-600 bg-gradient-to-r from-blue-50/50 to-white">
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2.5 py-0.5 rounded-md bg-blue-600 text-white text-[10px] font-extrabold uppercase">Atur Modal Kas</span>
+                                    <h3 class="text-sm font-extrabold text-[#0b132b]">Pengaturan Setoran Modal Awal Kas Perusahaan (Akun 1101 &amp; 3101)</h3>
+                                </div>
+                                <p class="text-xs text-slate-500">Tentukan atau ubah nominal Setoran Modal Awal Kas sesuai keinginan Anda (ketik <code class="font-bold text-slate-700">0</code> jika ingin memulai tanpa modal awal). Saat ini tercatat: <strong id="ovCurrentModalCashLabel" class="text-blue-700 font-extrabold">Rp 0</strong></p>
+                            </div>
+                            <form id="formQuickSetModalCash" onsubmit="return false;" class="flex flex-wrap sm:flex-nowrap items-end gap-2">
+                                <div>
+                                    <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Tanggal Modal</label>
+                                    <input type="date" id="quickModalDateInput" value="2026-01-01" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Nominal Setoran Modal Kas (Rp)</label>
+                                    <input type="number" id="quickModalAmountInput" min="0" step="1000" placeholder="Masukkan nominal modal kas..." class="w-48 bg-white border-2 border-blue-300 focus:border-blue-600 rounded-xl px-3 py-2 text-xs font-extrabold text-slate-900 focus:outline-none">
+                                </div>
+                                <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs transition shrink-0 shadow-sm">
+                                    <i class="fa-solid fa-floppy-disk mr-1"></i> Simpan Modal Kas
+                                </button>
+                                <button type="button" onclick="resetOpeningCashCapitalToZero()" class="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-500 text-rose-600 hover:text-white font-extrabold text-xs transition shrink-0" title="Nolkan Setoran Modal Awal Kas">
+                                    Reset Rp 0
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
                     <!-- Navigasi Cepat Modul Akuntansi -->
                     <div class="clean-card p-5">
                         <h3 class="text-xs font-extrabold uppercase tracking-wider text-[#0b132b] mb-3">Akses Cepat Modul Akuntansi Terintegrasi</h3>
-                        <div class="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-2.5">
+                        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-11 gap-2.5">
                             <button onclick="switchFinTab('jurnal')" class="p-3 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 text-center transition space-y-1">
                                 <i class="fa-solid fa-book text-emerald-600 text-base"></i>
                                 <span class="block text-[11px] font-extrabold text-slate-800">Jurnal Umum</span>
@@ -492,6 +524,10 @@
                             <button onclick="switchFinTab('bukubesar')" class="p-3 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 text-center transition space-y-1">
                                 <i class="fa-solid fa-layer-group text-blue-600 text-base"></i>
                                 <span class="block text-[11px] font-extrabold text-slate-800">Buku Besar</span>
+                            </button>
+                            <button onclick="switchFinTab('inventaris')" class="p-3 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 text-center transition space-y-1">
+                                <i class="fa-solid fa-boxes-stacked text-orange-500 text-base"></i>
+                                <span class="block text-[11px] font-extrabold text-slate-800">Inventaris</span>
                             </button>
                             <button onclick="switchFinTab('penjualan')" class="p-3 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 text-center transition space-y-1">
                                 <i class="fa-solid fa-sack-dollar text-emerald-600 text-base"></i>
@@ -649,6 +685,161 @@
                                     </tr>
                                 </thead>
                                 <tbody id="ledgerTableBody" class="divide-y divide-slate-200/70"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========================================================= -->
+                <!-- MODUL INVENTORY / INVENTARIS & SETORAN MODAL AWAL -->
+                <!-- ========================================================= -->
+                <div id="finTab_inventaris" class="fin-tab-panel hidden space-y-5">
+                    <!-- 1. Pengaturan Setoran Modal Awal Kas Sesuai Keinginan -->
+                    <div class="clean-card p-5 border-l-4 border-l-blue-600 space-y-3">
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2.5 py-0.5 rounded-md bg-blue-600 text-white text-[10px] font-extrabold uppercase">Modal Awal Kas</span>
+                                    <h3 class="text-sm font-extrabold text-[#0b132b]">1. Pengaturan Setoran Modal Awal Kas Perusahaan (Akun 1101 &amp; 3101)</h3>
+                                </div>
+                                <p class="text-xs text-slate-500">Atur bebas nominal Setoran Modal Awal Kas sesuai keinginan Anda (atau klik <strong>Reset Rp 0</strong>). Perubahan langsung memperbarui Saldo Kas, Arus Kas, Buku Besar &amp; Neraca.</p>
+                            </div>
+                            <form id="formInvSetModalCash" onsubmit="return false;" class="flex flex-wrap sm:flex-nowrap items-end gap-2">
+                                <div>
+                                    <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Tanggal</label>
+                                    <input type="date" id="invModalDateInput" value="2026-01-01" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Nominal Setoran Modal Kas (Rp)</label>
+                                    <input type="number" id="invModalAmountInput" min="0" step="1000" placeholder="Masukkan nominal modal kas..." class="w-48 bg-slate-50 border-2 border-blue-300 focus:border-blue-600 rounded-xl px-3 py-2 text-xs font-extrabold text-slate-900 focus:outline-none">
+                                </div>
+                                <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs transition shrink-0 shadow-sm">
+                                    <i class="fa-solid fa-floppy-disk mr-1"></i> Simpan Modal Kas
+                                </button>
+                                <button type="button" onclick="resetOpeningCashCapitalToZero()" class="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-500 text-rose-600 hover:text-white font-extrabold text-xs transition shrink-0">
+                                    Reset Rp 0
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- 2. Kelola Aset Inventaris & Peralatan Cabang (Akun 1201) -->
+                    <div class="clean-card p-5 space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                            <div>
+                                <h3 class="text-sm font-extrabold text-[#0b132b]">2. Kelola Inventaris &amp; Peralatan Cabang (Akun 1201 - Peralatan, Timbangan &amp; Inventaris)</h3>
+                                <p class="text-xs text-slate-500">Tambah, ubah nominal, atau hapus daftar inventaris perusahaan/cabang (timbangan digital, alat XRF, brankas, komputer, dll). Otomatis terintegrasi ke Neraca &amp; Buku Besar.</p>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-lg bg-orange-50 text-orange-700 text-[11px] font-extrabold">Total Inventaris (1201): <strong id="invAssetTotalBadge">Rp 0</strong></span>
+                        </div>
+
+                        <form id="formAddInventoryAsset" onsubmit="return false;" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Tanggal</label>
+                                <input type="date" id="invAssetDateInput" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Kode Inventaris</label>
+                                <input type="text" id="invAssetRefInput" placeholder="INV.AST.001" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Nama Barang / Inventaris</label>
+                                <input type="text" id="invAssetNameInput" placeholder="Timbangan Digital / XRF / Brankas" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Cabang / Lokasi</label>
+                                <select id="invAssetBranchSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold">
+                                    <option value="0">Pusat / Semua Cabang</option>
+                                    <option value="1">Jakarta</option>
+                                    <option value="2">Gading Serpong</option>
+                                    <option value="3">Bekasi</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Qty (Unit)</label>
+                                <input type="number" id="invAssetQtyInput" min="1" value="1" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Sumber Perolehan (Kredit)</label>
+                                <select id="invAssetSourceSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold">
+                                    <option value="3101">3101 - Setoran Modal Inventaris</option>
+                                    <option value="1101">1101 - Pembelian dari Kas &amp; Bank</option>
+                                    <option value="2101">2101 - Pembelian Kredit (Utang Usaha)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Nilai Total (Rp)</label>
+                                <div class="flex gap-1.5">
+                                    <input type="number" id="invAssetAmountInput" min="1000" placeholder="15000000" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold">
+                                    <button type="submit" class="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-extrabold text-xs shrink-0">+ Simpan</button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr class="bg-[#0b132b] text-white uppercase text-[10px] tracking-wider">
+                                        <th class="py-3 px-3 rounded-tl-xl">Tanggal &amp; Kode</th>
+                                        <th class="py-3 px-3">Nama Barang / Aset Inventaris</th>
+                                        <th class="py-3 px-3">Cabang</th>
+                                        <th class="py-3 px-3 text-center">Qty</th>
+                                        <th class="py-3 px-3">Sumber Perolehan</th>
+                                        <th class="py-3 px-3 text-right">Nilai Inventaris (Rp)</th>
+                                        <th class="py-3 px-3 text-center rounded-tr-xl">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventoryAssetsTableBody" class="divide-y divide-slate-200/70"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 3. Inventory Persediaan Stok Emas (Akun 1102) -->
+                    <div class="clean-card p-5 space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                            <div>
+                                <h3 class="text-sm font-extrabold text-[#0b132b]">3. Inventory Persediaan Stok Emas (Akun 1102 - Persediaan Emas)</h3>
+                                <p class="text-xs text-slate-500">Rekapitulasi stok fisik emas yang masuk dari Nota Pembelian Kasir dikurangi Penjualan/Peleburan Emas.</p>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 text-[11px] font-extrabold">Terintegrasi Kasir &amp; Penjualan</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 text-xs">
+                            <div>
+                                <span class="text-[10px] font-bold uppercase text-slate-400 block">Total Emas Masuk (Kasir)</span>
+                                <strong class="text-emerald-700 font-extrabold text-sm" id="invGoldInGramEl">0 Gram</strong>
+                                <span class="text-[11px] text-slate-500 block" id="invGoldInRpEl">Rp 0</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] font-bold uppercase text-slate-400 block">Total Emas Keluar (Terjual)</span>
+                                <strong class="text-rose-600 font-extrabold text-sm" id="invGoldOutGramEl">0 Gram</strong>
+                                <span class="text-[11px] text-slate-500 block" id="invGoldOutRpEl">HPP: Rp 0</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] font-bold uppercase text-slate-400 block">Stok Fisik Emas Tersedia</span>
+                                <strong class="text-purple-700 font-black text-sm" id="invGoldNetGramEl">0 Gram</strong>
+                                <span class="text-[11px] text-slate-500 block">Saldo Fisik Gudang/Brankas</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] font-bold uppercase text-slate-400 block">Nilai Persediaan Emas (1102)</span>
+                                <strong class="text-blue-700 font-black text-sm" id="invGoldBalanceRpEl">Rp 0</strong>
+                                <span class="text-[11px] text-slate-500 block">Sesuai Neraca Akun 1102</span>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr class="bg-[#0b132b] text-white uppercase text-[10px] tracking-wider">
+                                        <th class="py-3 px-3 rounded-tl-xl">Tanggal</th>
+                                        <th class="py-3 px-3">No. Nota / Invoice</th>
+                                        <th class="py-3 px-3">Tipe Mutasi</th>
+                                        <th class="py-3 px-3">Rincian Material / Buyer &amp; Cabang</th>
+                                        <th class="py-3 px-3 text-right">Berat (Gram)</th>
+                                        <th class="py-3 px-3 text-right rounded-tr-xl">Nilai Persediaan / HPP (Rp)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventoryGoldMutationTableBody" class="divide-y divide-slate-200/70"></tbody>
                             </table>
                         </div>
                     </div>

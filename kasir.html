@@ -290,17 +290,17 @@
             <p class="text-xs text-slate-500">Masuk menggunakan akun kasir cabang untuk membuat transaksi &amp; mencetak Nota Pembelian.</p>
         </div>
 
-        <form id="cashierLoginForm" onsubmit="return false;" class="space-y-4">
+        <form id="cashierLoginForm" onsubmit="return false;" class="space-y-4" autocomplete="off">
             <div>
-                <label class="block text-xs font-bold text-slate-600 mb-1.5">Username Kasir</label>
-                <input type="text" id="loginUsernameInput" placeholder="Contoh: fakar" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 text-slate-800 text-sm font-semibold focus:outline-none focus:border-blue-600 focus:bg-white transition">
+                <label class="block text-xs font-bold text-slate-600 mb-1.5">User ID / Username Kasir</label>
+                <input type="text" id="loginUsernameInput" placeholder="Masukkan User ID / Username..." autocomplete="off" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 text-slate-800 text-sm font-semibold focus:outline-none focus:border-blue-600 focus:bg-white transition">
             </div>
             <div>
                 <label class="block text-xs font-bold text-slate-600 mb-1.5">PIN / Password</label>
-                <input type="password" id="loginPinInput" placeholder="Masukkan PIN / Password..." required class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 text-slate-800 text-sm font-semibold focus:outline-none focus:border-blue-600 focus:bg-white transition">
+                <input type="password" id="loginPinInput" placeholder="Masukkan PIN / Password..." autocomplete="new-password" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 text-slate-800 text-sm font-semibold focus:outline-none focus:border-blue-600 focus:bg-white transition">
             </div>
 
-            <p id="cashierLoginError" class="text-xs text-rose-500 text-center hidden font-bold">Username atau PIN tidak sesuai! Silakan cek kembali.</p>
+            <p id="cashierLoginError" class="text-xs text-rose-500 text-center hidden font-bold">User ID atau PIN/Password tidak sesuai! Silakan hubungi Admin.</p>
 
             <button type="submit" id="cashierLoginBtn" class="w-full py-3.5 px-6 rounded-xl sidebar-link-active font-extrabold text-sm flex items-center justify-center gap-2">
                 <i class="fa-solid fa-right-to-bracket"></i>
@@ -308,15 +308,9 @@
             </button>
         </form>
 
-        <!-- Quick Demo Login List -->
-        <div class="pt-4 border-t border-slate-200/80 space-y-2.5">
-            <p class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 text-center">Pilih Akun Kasir Cabang (Klik 1x Login):</p>
-            <div id="availableCashiersQuickList" class="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto pr-1">
-                <!-- Diisi oleh JS -->
-            </div>
-        </div>
+        <div id="availableCashiersQuickList" class="hidden"></div>
 
-        <div class="pt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+        <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
             <a href="index.html" class="hover:text-blue-600 font-bold flex items-center gap-1.5">
                 <i class="fa-solid fa-globe"></i> Website
             </a>
@@ -1704,42 +1698,19 @@
             }
         }
 
-        // Render Quick Login List
+        // Keamanan Login: Daftar akun dan PIN dirahasiakan (diatur oleh Admin)
         function renderQuickLoginCashiers() {
-            const cashiers = getCashiers();
-            const outlets = getOutlets();
-            availableCashiersQuickList.innerHTML = '';
-
-            cashiers.forEach(c => {
-                const branch = outlets.find(o => String(o.id) === String(c.outletId)) || { name: 'Cabang JEI' };
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'w-full text-left px-3.5 py-2.5 rounded-2xl bg-slate-50 hover:bg-[#efeaff] border border-slate-200 hover:border-[#6351f7]/40 transition flex items-center justify-between text-xs group';
-                btn.innerHTML = `
-                    <div class="flex items-center gap-2.5">
-                        <span class="w-7 h-7 rounded-lg icon-3d-purple text-white flex items-center justify-center text-[11px] font-bold">
-                            <i class="fa-solid fa-user"></i>
-                        </span>
-                        <div>
-                            <span class="font-extrabold text-slate-800 uppercase block leading-none">${c.name}</span>
-                            <span class="text-[10px] text-slate-500">${branch.name}</span>
-                        </div>
-                    </div>
-                    <span class="font-mono text-[11px] text-[#5945f5] font-bold bg-white px-2.5 py-1 rounded-xl border border-slate-200">user: ${c.username} | PIN: ${c.pin}</span>
-                `;
-                btn.addEventListener('click', () => {
-                    loginUsernameInput.value = c.username;
-                    loginPinInput.value = c.pin;
-                    loginCashier(c.username, c.pin);
-                });
-                availableCashiersQuickList.appendChild(btn);
-            });
+            if (availableCashiersQuickList) {
+                availableCashiersQuickList.innerHTML = '';
+            }
         }
 
         function loginCashier(username, pin) {
             const cashiers = getCashiers();
+            const uClean = (username || '').trim().toLowerCase();
+            const pClean = String(pin || '').trim();
             const found = cashiers.find(
-                c => c.username.toLowerCase() === username.trim().toLowerCase() && String(c.pin) === String(pin).trim()
+                c => (c.username.toLowerCase() === uClean || c.name.toLowerCase() === uClean) && String(c.pin) === pClean
             );
 
             if (!found) {
@@ -1762,9 +1733,10 @@
         logoutCashierBtn.addEventListener('click', () => {
             sessionStorage.removeItem('jantung_emas_active_cashier');
             activeCashier = null;
+            if (loginUsernameInput) loginUsernameInput.value = '';
+            if (loginPinInput) loginPinInput.value = '';
             mainWorkspace.classList.add('hidden');
             cashierLoginSection.classList.remove('hidden');
-            renderQuickLoginCashiers();
         });
 
         function getBranchForCashier(cashier) {
